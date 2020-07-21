@@ -133,10 +133,11 @@ public class FileSystemXmlApplicationContext extends AbstractXmlApplicationConte
 	 */
 	public FileSystemXmlApplicationContext(String[] configLocations, boolean refresh, ApplicationContext parent)
 			throws BeansException {
-
+		//双亲容器
 		super(parent);
 		setConfigLocations(configLocations);
 		if (refresh) {
+			//初始化容器
 			refresh();
 		}
 	}
