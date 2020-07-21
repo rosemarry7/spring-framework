@@ -75,15 +75,20 @@ public abstract class AbstractXmlApplicationContext extends AbstractRefreshableC
 	 * @see org.springframework.beans.factory.xml.XmlBeanDefinitionReader
 	 * @see #initBeanDefinitionReader
 	 * @see #loadBeanDefinitions
+	 * 此处实现loadBeanDefinitions
 	 */
 	@Override
 	protected void loadBeanDefinitions(DefaultListableBeanFactory beanFactory) throws BeansException, IOException {
 		// Create a new XmlBeanDefinitionReader for the given BeanFactory.
+		// 创建XmlBeanDefinitionReader，并通过回调设置到BeanFactory中去，创建BeanFactory的过程可以参考
+		// 上下文对编程式使用Ioc容器的相关分析，这里和前面一样，使用的也是DefaultListableBeanFactory
 		XmlBeanDefinitionReader beanDefinitionReader = new XmlBeanDefinitionReader(beanFactory);
 
 		// Configure the bean definition reader with this context's
 		// resource loading environment.
 		beanDefinitionReader.setEnvironment(this.getEnvironment());
+		//这里设置XmlDefinitionReader，为XmlDefinitionReader配ResourceLoader
+		//因为DefaultResourceLoader是父类，所以this可以直接被使用
 		beanDefinitionReader.setResourceLoader(this);
 		beanDefinitionReader.setEntityResolver(new ResourceEntityResolver(this));
 
@@ -91,6 +96,7 @@ public abstract class AbstractXmlApplicationContext extends AbstractRefreshableC
 		// 允许子类提供一个自定义的reader初始化方法
 		// then proceed with actually loading the bean definitions.
 		// 然后继续加载实际的beanDefinition
+		// 这里是bean定义信息的载入过程
 		initBeanDefinitionReader(beanDefinitionReader);
 		loadBeanDefinitions(beanDefinitionReader);
 	}
@@ -123,7 +129,7 @@ public abstract class AbstractXmlApplicationContext extends AbstractRefreshableC
 	 * @see #getResourcePatternResolver
 	 */
 	protected void loadBeanDefinitions(XmlBeanDefinitionReader reader) throws BeansException, IOException {
-		
+		//以Resource的方式获取配置文件的资源位置
 		Resource[] configResources = getConfigResources();
 		if (configResources != null) {
 			reader.loadBeanDefinitions(configResources);

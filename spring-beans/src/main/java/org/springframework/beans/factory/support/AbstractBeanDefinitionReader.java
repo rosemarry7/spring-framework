@@ -204,7 +204,7 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 	 * @see #loadBeanDefinitions(org.springframework.core.io.Resource[])
 	 */
 	public int loadBeanDefinitions(String location, Set<Resource> actualResources) throws BeanDefinitionStoreException {
-		//获得resourceLoader
+		//获得resourceLoader 这里获得的是DefaultResourceLoader
 		ResourceLoader resourceLoader = getResourceLoader();
 		if (resourceLoader == null) {
 			throw new BeanDefinitionStoreException(
@@ -235,6 +235,7 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 			// Can only load single resources by absolute URL.
 			//从绝对路径获取单一资源 此处是DefaultResourceLoader
 			Resource resource = resourceLoader.getResource(location);
+			//这里使用XmlBeanDefinitionReader进行读取
 			int loadCount = loadBeanDefinitions(resource);
 			if (actualResources != null) {
 				actualResources.add(resource);
@@ -248,9 +249,13 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 
 	@Override
 	public int loadBeanDefinitions(String... locations) throws BeanDefinitionStoreException {
+		//如果Resource为空，则停止BeanDefinition的载入
+		//然后启动BeanDefinition的载入过程
+		//这个过程会遍历整个Resource集合锁包含的BeanDefinition信息
 		Assert.notNull(locations, "Location array must not be null");
 		int counter = 0;
 		for (String location : locations) {
+			//之后就是具体的Bean解析过程
 			counter += loadBeanDefinitions(location);
 		}
 		return counter;

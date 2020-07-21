@@ -416,6 +416,7 @@ public class BeanDefinitionParserDelegate {
 	 * {@link org.springframework.beans.factory.parsing.ProblemReporter}.
 	 */
 	public BeanDefinitionHolder parseBeanDefinitionElement(Element ele, BeanDefinition containingBean) {
+		//这里取得在<bean>元素中定义的id、name和aliase属性的值
 		String id = ele.getAttribute(ID_ATTRIBUTE);
 		String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);
 
@@ -438,6 +439,7 @@ public class BeanDefinitionParserDelegate {
 			checkNameUniqueness(beanName, aliases, ele);
 		}
 
+		//这个方法会引发对Bean元素的详细解析
 		AbstractBeanDefinition beanDefinition = parseBeanDefinitionElement(ele, beanName, containingBean);
 		if (beanDefinition != null) {
 			if (!StringUtils.hasText(beanName)) {
@@ -504,7 +506,8 @@ public class BeanDefinitionParserDelegate {
 			Element ele, String beanName, BeanDefinition containingBean) {
 
 		this.parseState.push(new BeanEntry(beanName));
-
+		// 这里只读取定义的<bean>中设置的class名字，然后载入到BeanDefinition中去
+		// 只是做个记录，并不涉及对象的实例化过程，对象的实例化实际上是在依赖注入时完成的
 		String className = null;
 		if (ele.hasAttribute(CLASS_ATTRIBUTE)) {
 			className = ele.getAttribute(CLASS_ATTRIBUTE).trim();
@@ -515,16 +518,19 @@ public class BeanDefinitionParserDelegate {
 			if (ele.hasAttribute(PARENT_ATTRIBUTE)) {
 				parent = ele.getAttribute(PARENT_ATTRIBUTE);
 			}
+			// 这里生成需要的BeanDefinition对象，为Bean定义信息的载入做准备，实际上创建的是一个GenericBeanDefinition
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
-
+			// 这里对当前bean的元素进行分析，并设置description信息
 			parseBeanDefinitionAttributes(ele, beanName, containingBean, bd);
 			bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
-
+			//bean的元信息
 			parseMetaElements(ele, bd);
 			parseLookupOverrideSubElements(ele, bd.getMethodOverrides());
 			parseReplacedMethodSubElements(ele, bd.getMethodOverrides());
 
+			//bean的构造函数
 			parseConstructorArgElements(ele, bd);
+			//bean的property
 			parsePropertyElements(ele, bd);
 			parseQualifierElements(ele, bd);
 
@@ -533,6 +539,8 @@ public class BeanDefinitionParserDelegate {
 
 			return bd;
 		}
+		//下面这些异常是在配置Bean出现问题时经常会看到的，原来是在这里抛出的
+		// 这些检查是在createBeanDefinition时进行的，会检查Bean的class设置是否正确，比如这个类是否能找到
 		catch (ClassNotFoundException ex) {
 			error("Bean class [" + className + "] not found", ele, ex);
 		}
@@ -651,6 +659,7 @@ public class BeanDefinitionParserDelegate {
 		return BeanDefinitionReaderUtils.createBeanDefinition(
 				parentName, className, this.readerContext.getBeanClassLoader());
 	}
+	
 
 	public void parseMetaElements(Element ele, BeanMetadataAttributeAccessor attributeAccessor) {
 		NodeList nl = ele.getChildNodes();
@@ -846,10 +855,14 @@ public class BeanDefinitionParserDelegate {
 		}
 		this.parseState.push(new PropertyEntry(propertyName));
 		try {
+			//如果同一个Bean中已经有同名的property存在，则不进行解析，直接返回。
+			// 也就是说，如果在同一个Bean中有同名的property设置，那么起作用的只是第一个
 			if (bd.getPropertyValues().contains(propertyName)) {
 				error("Multiple 'property' definitions for property '" + propertyName + "'", ele);
 				return;
 			}
+			// 这里是解析property值的地方，返回的对象对应对Bean定义的property属性设置的解析结果，
+			// 这个解析结果会封装到PropertyValue对象中，然后设置到BeanDefinitionHolder中去
 			Object val = parsePropertyValue(ele, bd, propertyName);
 			PropertyValue pv = new PropertyValue(propertyName, val);
 			parseMetaElements(ele, pv);
@@ -906,6 +919,9 @@ public class BeanDefinitionParserDelegate {
 	/**
 	 * Get the value of a property element. May be a list etc.
 	 * Also used for constructor arguments, "propertyName" being null in this case.
+	 *
+	 *   这里取得property元素的值，也许是一个list或其他
+	 *     
 	 */
 	public Object parsePropertyValue(Element ele, BeanDefinition bd, String propertyName) {
 		String elementName = (propertyName != null) ?
@@ -929,6 +945,7 @@ public class BeanDefinitionParserDelegate {
 			}
 		}
 
+		//这里判断property的属性，是ref还是value，不允许同时是ref和value
 		boolean hasRefAttribute = ele.hasAttribute(REF_ATTRIBUTE);
 		boolean hasValueAttribute = ele.hasAttribute(VALUE_ATTRIBUTE);
 		if ((hasRefAttribute && hasValueAttribute) ||

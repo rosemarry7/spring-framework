@@ -91,6 +91,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		this.readerContext = readerContext;
 		logger.debug("Loading bean definitions");
 		Element root = doc.getDocumentElement();
+		//获取root解析
 		doRegisterBeanDefinitions(root);
 	}
 
@@ -114,12 +115,12 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * Register each bean definition within the given root {@code <beans/>} element.
 	 */
 	protected void doRegisterBeanDefinitions(Element root) {
-		// Any nested <beans> elements will cause recursion in this method. In
-		// order to propagate and preserve <beans> default-* attributes correctly,
-		// keep track of the current (parent) delegate, which may be null. Create
-		// the new (child) delegate with a reference to the parent for fallback purposes,
-		// then ultimately reset this.delegate back to its original (parent) reference.
-		// this behavior emulates a stack of delegates without actually necessitating one.
+		//任何嵌套的<beans>元素都将导致此方法中的递归。
+		// 为了正确传播和保留<beans> default- *属性，
+		// 跟踪当前（父）委托，该委托可以为null。
+		// 创建新的（子）委托，并带有对父引用的回退目的，
+		// 然后最终将this.delegate重置回其原始（父）引用。
+		// 此行为模拟了一组委托，而实际上并没有必要。
 		BeanDefinitionParserDelegate parent = this.delegate;
 		this.delegate = createDelegate(getReaderContext(), root, parent);
 
@@ -139,6 +140,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 
 		preProcessXml(root);
+		//此处进入
 		parseBeanDefinitions(root, this.delegate);
 		postProcessXml(root);
 
@@ -187,6 +189,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			processAliasRegistration(ele);
 		}
 		else if (delegate.nodeNameEquals(ele, BEAN_ELEMENT)) {
+			//解析到xml的bean标签 这一步开始解析bean
 			processBeanDefinition(ele, delegate);
 		}
 		else if (delegate.nodeNameEquals(ele, NESTED_BEANS_ELEMENT)) {
@@ -294,13 +297,29 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	/**
 	 * Process the given bean element, parsing the bean definition
 	 * and registering it with the registry.
+	 * 处理给定的bean元素，解析bean定义并将其注册到容器中。
+	 *
+	 * 这样，得到了documentReader以后，为具体的SpringBean的解析过程准备好了数据
+	 * 这里是处理BeanDefinition的地方，具体的处理委托给BeanDefinitionParserDelegate来
+	 * 完成，ele对应在SpringBeanDefinition中定义的XML元素
+	 *
 	 */
 	protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
+		// 创建一个BeanDefinitionHolder 来持有解析后的bean
+		/*
+		   BeanDefinitionHolder是BeanDefinition对象的封装类，
+		   封装了BeanDefinition，Bean的名字和别名。用它来完成向IoC容器注册。
+		   得到这个BeanDefinitionHolder就意味着BeanDefinition
+		   是通过BeanDefinitionParserDelegate
+		   对XML元素的信息按照Spring的Bean规则进行解析得到的
+		 */
+
 		BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);
 		if (bdHolder != null) {
 			bdHolder = delegate.decorateBeanDefinitionIfRequired(ele, bdHolder);
 			try {
 				// Register the final decorated instance.
+				// 这里是向IoC容器注册解析到BeanDefinition的地方
 				BeanDefinitionReaderUtils.registerBeanDefinition(bdHolder, getReaderContext().getRegistry());
 			}
 			catch (BeanDefinitionStoreException ex) {
@@ -308,6 +327,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						bdHolder.getBeanName() + "'", ele, ex);
 			}
 			// Send registration event.
+			// 在BeanDefinition向Ioc容器注册完成以后，发送消息
 			getReaderContext().fireComponentRegistered(new BeanComponentDefinition(bdHolder));
 		}
 	}

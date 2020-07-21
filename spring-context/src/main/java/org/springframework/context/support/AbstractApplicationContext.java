@@ -502,15 +502,26 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	protected ConfigurableEnvironment createEnvironment() {
 		return new StandardEnvironment();
 	}
-
+	
+	/**
+	 * 该方法详细地描述了整个ApplicationContext的初始化过程，比如BeanFactory的更新，
+	 * MessageSource和PostProcessor 的注册，等等。
+	 * 这里看起来更像是对ApplicationContext进行初始化的模板或执行提纲，
+	 * 这个执行过程为Bean的生命周期管理提供了条件。
+	 * 从这一系列调用的名字就能大致了解应用上下文初始化的主要内容。
+	 *
+	 * @throws BeansException
+	 * @throws IllegalStateException
+	 */
 	@Override
 	public void refresh() throws BeansException, IllegalStateException {
 		synchronized (this.startupShutdownMonitor) {
 			// Prepare this context for refreshing.
+			// 为容器的初始化做准备
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
-			// 告诉子类去刷新内部的bean 工厂
+			// 告诉子类去刷新内部的bean工厂，这是在子类中启动refreshBeanFactory的地方
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
@@ -518,30 +529,39 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
+				// 设置BeanFactory的后置处理
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
+				//调用BeanFactory的后置处理器，这些处理器是在bean定义中向容器注册的
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				//注册bean的后置处理器，在Bean创建过程中调用
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
+				// 对上下文中的消息源进行初始化
 				initMessageSource();
 
 				// Initialize event multicaster for this context.
+				// 初始化上下文中的事件机制
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
+				// 初始化其他特殊的bean
 				onRefresh();
 
 				// Check for listener beans and register them.
+				//检查监听bean，并将这些bean向容器注册
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
+				// 实例化所有non-lazy-init模式的单例bean
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
+				// 最后一步： 发布容器事件，结束refresh过程
 				finishRefresh();
 			}
 
@@ -611,7 +631,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @see #getBeanFactory()
 	 */
 	protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
-		//刷新容器/初始化容器
+		//刷新容器/初始化容器 由AbstractRefreshableApplicationContext实现
 		refreshBeanFactory();
 		ConfigurableListableBeanFactory beanFactory = getBeanFactory();
 		if (logger.isDebugEnabled()) {

@@ -326,6 +326,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 			throw new BeanDefinitionStoreException(
 					"Detected cyclic loading of " + encodedResource + " - check your import definitions!");
 		}
+		// 这里的到xml文件，并的到IO的InputSource准备进行读取
 		try {
 			InputStream inputStream = encodedResource.getResource().getInputStream();
 			try {
@@ -333,6 +334,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 				if (encodedResource.getEncoding() != null) {
 					inputSource.setEncoding(encodedResource.getEncoding());
 				}
+				//实际载入bean的方法
 				return doLoadBeanDefinitions(inputSource, encodedResource.getResource());
 			}
 			finally {
@@ -384,11 +386,17 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @throws BeanDefinitionStoreException in case of loading or parsing errors
 	 * @see #doLoadDocument
 	 * @see #registerBeanDefinitions
+	 * 
+	 * 从特定的xml文件中实际载入bean的地方
 	 */
 	protected int doLoadBeanDefinitions(InputSource inputSource, Resource resource)
 			throws BeanDefinitionStoreException {
 		try {
+			//这里获取xml文件的Document对象
+			// 这个过程由DocumentLoader完成
+			// 这个DocumentLoader是DefaultDocumentLoader 在定义DocumentLoader的地方创建
 			Document doc = doLoadDocument(inputSource, resource);
+			// 这里启动的是对BeanDefinition解析的详细过程，这个解析会使用到Spring的bean配置规则
 			return registerBeanDefinitions(doc, resource);
 		}
 		catch (BeanDefinitionStoreException ex) {
@@ -503,10 +511,14 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @see BeanDefinitionDocumentReader#registerBeanDefinitions
 	 */
 	public int registerBeanDefinitions(Document doc, Resource resource) throws BeanDefinitionStoreException {
+		// 这里得到BeanDefinitionDocumentReader 来对 xml的BeanDefinition进行解析
 		BeanDefinitionDocumentReader documentReader = createBeanDefinitionDocumentReader();
+		// 载入bean的数量统计
 		int countBefore = getRegistry().getBeanDefinitionCount();
+		// 具体的解析过程在这个 registerBeanDefinitions() 中完成
 		documentReader.registerBeanDefinitions(doc, createReaderContext(resource));
 		return getRegistry().getBeanDefinitionCount() - countBefore;
+		
 	}
 
 	/**
